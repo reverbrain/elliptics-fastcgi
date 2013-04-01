@@ -4,10 +4,6 @@ project(${TARGET})
 
 file(READ "${PROJECT_SOURCE_DIR}/debian/changelog" DEBCHANGELOG)
 
-string(REGEX MATCH "([0-9]+\\.[0-9]+.[0-9]+)" DEBFULLVERSION "${DEBCHANGELOG}")
-string(REGEX MATCH "([0-9]+\\.[0-9]+)" MAJOR_VERSION "${DEBFULLVERSION}")
-string(REGEX MATCH "([0-9]+$)" MINOR_VERSION "${DEBFULLVERSION}")
-
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -Wall -pedantic -std=c++0x")
 
 set(SOURCES 
@@ -31,7 +27,6 @@ set_target_properties(
     ${TARGET} PROPERTIES
         PREFIX ""
         INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib/fastcgi2"
-        VERSION "${MAJOR_VERSION}.${MINOR_VERSION}"
     )
 
 install(
