@@ -8,24 +8,24 @@
 
 #include "component_base.hpp"
 
-class EmbedProcessorModuleBase : public ComponentBase {
+class embed_processor_module_base_t : public component_base_t {
 public:
-	EmbedProcessorModuleBase(fastcgi::ComponentContext *context);
-	virtual ~EmbedProcessorModuleBase();
+	embed_processor_module_base_t(fastcgi::ComponentContext *context);
+	virtual ~embed_processor_module_base_t();
 
 	virtual void onLoad();
 	virtual void onUnload();
 
-	virtual bool processEmbed(fastcgi::Request *request, uint32_t flags, char *data, uint32_t size, int &http_status);
+	virtual bool process_embed(fastcgi::Request *request, uint32_t flags, char *data, uint32_t size, int &http_status);
 
 	const static uint32_t DNET_FCGI_EMBED_DATA = 1;
 	const static uint32_t DNET_FCGI_EMBED_TIMESTAMP = 2;
 
 protected:
-	fastcgi::Logger* log() const;
+	fastcgi::Logger *log() const;
 
 private:
-	fastcgi::Logger *logger_;
+	fastcgi::Logger *m_logger;
 };
 
 #endif /* EMBED_PROCESSOR_MODULE */

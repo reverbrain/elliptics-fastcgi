@@ -4,32 +4,30 @@
 
 #include <stdexcept>
 
-EmbedProcessorModuleBase::EmbedProcessorModuleBase (fastcgi::ComponentContext *context)
-	: ComponentBase (context)
-	, logger_ (0) {
+embed_processor_module_base_t::embed_processor_module_base_t(fastcgi::ComponentContext *context)
+	: component_base_t(context)
+	, m_logger(0) {
 }
 
-EmbedProcessorModuleBase::~EmbedProcessorModuleBase () {
+embed_processor_module_base_t::~embed_processor_module_base_t() {
 }
 
-void
-EmbedProcessorModuleBase::onLoad () {
-	assert (0 == logger_);
+void embed_processor_module_base_t::onLoad() {
+	assert (0 == m_logger);
 
-	const fastcgi::Config *config = context ()->getConfig ();
-	std::string path (context ()->getComponentXPath ());
+	const fastcgi::Config *config = context()->getConfig();
+	std::string path (context()->getComponentXPath());
 
-	logger_ = context ()->findComponent <fastcgi::Logger> (config->asString (path + "/logger"));
-	if (!logger_) {
-		throw std::logic_error ("can't find logger");
+	m_logger = context()->findComponent<fastcgi::Logger>(config->asString(path + "/logger"));
+	if (!m_logger) {
+		throw std::logic_error("can't find logger");
 	}
 }
 
-void
-EmbedProcessorModuleBase::onUnload () {
+void embed_processor_module_base_t::onUnload() {
 }
 
-bool EmbedProcessorModuleBase::processEmbed(fastcgi::Request *request, uint32_t flags, char *data, uint32_t size, int &http_status) {
+bool embed_processor_module_base_t::process_embed(fastcgi::Request *request, uint32_t flags, char *data, uint32_t size, int &http_status) {
 	(void)request;
 	(void)flags;
 	(void)data;
@@ -37,6 +35,6 @@ bool EmbedProcessorModuleBase::processEmbed(fastcgi::Request *request, uint32_t 
 	return true;
 }
 
-fastcgi::Logger *EmbedProcessorModuleBase::log () const {
-	return logger_;
+fastcgi::Logger *embed_processor_module_base_t::log() const {
+	return m_logger;
 }
