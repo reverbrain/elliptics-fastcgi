@@ -17,58 +17,58 @@
 #include "component_base.hpp"
 #include "embed_processor.hpp"
 
-class Proxy :
-	virtual public ComponentBase
+class proxy_t :
+	virtual public component_base_t
 	, virtual public fastcgi::Handler
 {
 private:
-	typedef void (Proxy::*RequestHandler) (fastcgi::Request *request);
+	typedef void (proxy_t::*RequestHandler)(fastcgi::Request *request);
 	//using RequestHandler = void (Proxy::*) (fastcgi::Request *request);
-	typedef std::map <std::string, RequestHandler> RequestHandlers;	
+	typedef std::map<std::string, RequestHandler> RequestHandlers;
 
 public:
-	typedef boost::char_separator <char> Separator;
-	typedef boost::tokenizer <Separator> Tokenizer;
+	typedef boost::char_separator<char> separator_t;
+	typedef boost::tokenizer<separator_t> tokenizer_t;
 
-	struct Signature {
+	struct signature_t {
 		std::string path;
 		std::string key;
 	};
 
-	Proxy (fastcgi::ComponentContext *context);
-	virtual ~Proxy ();
+	proxy_t(fastcgi::ComponentContext *context);
+	virtual ~proxy_t();
 
-	virtual void onLoad ();
-	virtual void onUnload ();
-	virtual void handleRequest (fastcgi::Request *request, fastcgi::HandlerContext *context);
+	virtual void onLoad();
+	virtual void onUnload();
+	virtual void handleRequest(fastcgi::Request *request, fastcgi::HandlerContext *context);
 
 private:
-	void registerHandler (const char *name, RequestHandler handler);
+	void register_handler(const char *name, RequestHandler handler);
 
-	void uploadHandler (fastcgi::Request *request);
-	void getHandler (fastcgi::Request *request);
-	void deleteHandler (fastcgi::Request *request);
-	void downloadInfoHandler (fastcgi::Request *request);
-	void bulkUploadHandler (fastcgi::Request *request);
-	void bulkGetHandler (fastcgi::Request *request);
-	void pingHandler (fastcgi::Request *request);
-	void statLogHandler (fastcgi::Request *request);
-	void execScriptHandler (fastcgi::Request *request);
+	void upload_handler(fastcgi::Request *request);
+	void get_handler(fastcgi::Request *request);
+	void delete_handler(fastcgi::Request *request);
+	void download_info_handler(fastcgi::Request *request);
+	void bulk_upload_handler(fastcgi::Request *request);
+	void bulk_get_handler(fastcgi::Request *request);
+	void ping_handler(fastcgi::Request *request);
+	void stat_log_handler(fastcgi::Request *request);
+	void exec_script_handler(fastcgi::Request *request);
 
-	void allowOrigin (fastcgi::Request *request) const;
+	void allow_origin(fastcgi::Request *request) const;
 
-	boost::shared_ptr <elliptics::EllipticsProxy> ellipticsProxy_;
+	boost::shared_ptr<elliptics::elliptics_proxy_t> m_elliptics_proxy;
 
-	RequestHandlers handlers_;
+	RequestHandlers m_handlers;
 
-	int write_port_;
+	int m_write_port;
 
-	std::set <std::string> deny_list_;
-	std::set <std::string> allow_list_;
-	std::map <std::string, std::string> typemap_;
-	std::map <uint32_t, EmbedProcessorModuleBase *> embed_processors_;
-	std::set <std::string> allow_origin_domains_;
-	std::set <std::string> allow_origin_handlers_;
+	std::set<std::string> m_deny_list;
+	std::set<std::string> m_allow_list;
+	std::map<std::string, std::string> m_typemap;
+	std::map<uint32_t, embed_processor_module_base_t *> m_embed_processors;
+	std::set<std::string> m_allow_origin_domains;
+	std::set<std::string> m_allow_origin_handlers;
 };
 
 #endif /* PROXY_HPP_MODULE */

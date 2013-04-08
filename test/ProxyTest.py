@@ -145,8 +145,8 @@ def test3 ():
 		request_successful (r)
 
 if __name__ == "__main__":
-#	test1 ()
-#	test2 ()
+	test1 ()
+	test2 ()
 #	files = {"file1" : "data1", "file2" : "data2"}
 	
 #files = {"file1" : "file2"}

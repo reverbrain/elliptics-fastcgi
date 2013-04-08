@@ -2,29 +2,29 @@
 #include <fastcgi2/config.h>
 #include <stdexcept>
 
-ComponentBase::ComponentBase (fastcgi::ComponentContext * context)
-	: fastcgi::Component (context)
-	, logger_ (0)
+component_base_t::component_base_t(fastcgi::ComponentContext *context)
+	: fastcgi::Component(context)
+	, m_logger(0)
 {}
 
-ComponentBase::~ComponentBase() {
+component_base_t::~component_base_t() {
 }
 
-void ComponentBase::onLoad() {
-	assert (0 == logger_);
+void component_base_t::onLoad() {
+	assert(0 == m_logger);
 
-	const fastcgi::Config *config = context ()->getConfig ();
-	std::string path (context ()->getComponentXPath ());
+	const fastcgi::Config *config = context()->getConfig();
+	std::string path(context()->getComponentXPath());
 
-	logger_ = context ()->findComponent <fastcgi::Logger> (config->asString (path + "/logger"));
-	if (!logger_) {
-		throw std::logic_error ("can't find logger");
+	m_logger = context()->findComponent<fastcgi::Logger>(config->asString(path + "/logger"));
+	if (!m_logger) {
+		throw std::logic_error("can't find logger");
 	}
 }
 
-void ComponentBase::onUnload() {
+void component_base_t::onUnload() {
 }
 
-fastcgi::Logger *ComponentBase::log() const {
-	return logger_;
+fastcgi::Logger *component_base_t::log() const {
+	return m_logger;
 }
