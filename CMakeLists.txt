@@ -19,7 +19,7 @@ add_library(${TARGET} SHARED ${SOURCES})
 
 target_link_libraries(
 	${TARGET}
-	elliptics-proxy
+	mastermind
 	fastcgi-daemon2 
 	)
 

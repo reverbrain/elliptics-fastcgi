@@ -1,3 +1,10 @@
+elliptics-fastcgi (2.0.0-d1) lucid; urgency=low
+
+  * Uses elliptics_session instead of libelliptics_proxy
+  * Uses libmastermind
+
+ -- derikon <derikon@derikon.dev.yandex.net>  Thu, 11 Jul 2013 18:40:19 +0400
+
 elliptics-fastcgi (2.0.0) UNRELEASED; urgency=low
 
   * Initial release.

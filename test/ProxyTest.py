@@ -24,8 +24,8 @@ def plain_write_file (filename, data, offset):
 	r = requests.post ("http://localhost:9000/upload/" + str (filename) + "?plain_write&offset=" + str (offset), data = data)
 	return r
 
-def commit_file (filename, data, offset):
-	r = requests.post ("http://localhost:9000/upload/" + str (filename) + "?commit&offset=" + str (offset), data = data)
+def commit_file (filename, data, offset, size):
+	r = requests.post ("http://localhost:9000/upload/" + str (filename) + "?commit=" + str(size) + "&offset=" + str (offset), data = data)
 	return r
 
 def bulk_write (files):
@@ -108,7 +108,7 @@ def test2 ():
 	r = plain_write_file (filename, data [2:6], 2)
 	request_successful (r)
 	print "*INFO* Commit"
-	r = commit_file (filename, data [6:], 6)
+	r = commit_file (filename, data [6:], 6, len(data))
 	request_successful (r)
 	print "*INFO* Verify"
 	verify_data (filename, data)
@@ -145,8 +145,8 @@ def test3 ():
 		request_successful (r)
 
 if __name__ == "__main__":
-#	test1 ()
-#	test2 ()
+	test1 ()
+	test2 ()
 #	files = {"file1" : "data1", "file2" : "data2"}
 	
 #files = {"file1" : "file2"}
