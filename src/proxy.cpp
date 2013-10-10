@@ -283,6 +283,10 @@ void proxy_t::handleRequest(fastcgi::Request *request, fastcgi::HandlerContext *
 		(it->second)(request);
 	}
 	catch (const fastcgi::HttpException &e) {
+		log()->debug("Http Exception: %s", e.what());
+		throw;
+	}
+	catch (const std::exception &e) {
 		log()->debug("Exception: %s", e.what());
 		throw;
 	}
@@ -833,10 +837,22 @@ ioremap::elliptics::async_write_result proxy_t::write(ioremap::elliptics::sessio
 											 ) {
 	assert(request != 0);
 	if (request->hasArg("prepare")) {
-		size_t size = boost::lexical_cast<uint64_t>(request->getArg("prepare"));
+		size_t size;
+		try {
+			size = boost::lexical_cast<uint64_t>(request->getArg("prepare"));
+		} catch (...) {
+			log()->debug("Cannot parse size of file from \'prepare\' argument");
+			throw fastcgi::HttpException(400);
+		}
 		return session.write_prepare(key, data, offset, size);
 	} else if (request->hasArg("commit")) {
-		size_t size = boost::lexical_cast<uint64_t>(request->getArg("commit"));
+		size_t size;
+		try {
+			size = boost::lexical_cast<uint64_t>(request->getArg("commit"));
+		} catch (...) {
+			log()->debug("Cannot parse size of file from \'commit\' argument");
+			throw fastcgi::HttpException(400);
+		}
 		return session.write_commit(key, data, offset, size);
 	} else if (request->hasArg("plain_write") || request->hasArg("plain-write")) {
 		return session.write_plain(key, data, offset);
