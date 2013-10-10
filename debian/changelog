@@ -1,3 +1,9 @@
+elliptics-fastcgi (2.0.9) lucid; urgency=low
+
+  * Added a check for correct values of prepare and commit args
+
+ -- Artem Sokolov <derikon@yandex-team.ru>  Thu, 10 Oct 2013 14:41:58 +0400
+
 elliptics-fastcgi (2.0.8) lucid; urgency=low
 
   * Delete handler returns 402 if file does not exist for legacy usage
