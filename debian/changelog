@@ -1,3 +1,9 @@
+elliptics-fastcgi (2.0.10) lucid; urgency=low
+
+  * Fixed log levels for error messages
+
+ -- Artem Sokolov <derikon@yandex-team.ru>  Tue, 26 Nov 2013 15:48:45 +0400
+
 elliptics-fastcgi (2.0.9) lucid; urgency=low
 
   * Added a check for correct values of prepare and commit args
