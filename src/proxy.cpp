@@ -283,15 +283,15 @@ void proxy_t::handleRequest(fastcgi::Request *request, fastcgi::HandlerContext *
 		(it->second)(request);
 	}
 	catch (const fastcgi::HttpException &e) {
-		log()->debug("Http Exception: %s", e.what());
+		log()->error("Http Exception: %s", e.what());
 		throw;
 	}
 	catch (const std::exception &e) {
-		log()->debug("Exception: %s", e.what());
+		log()->error("Exception: %s", e.what());
 		throw;
 	}
 	catch (...) {
-		log()->debug("Exception: unknown");
+		log()->error("Exception: unknown");
 		throw fastcgi::HttpException(501);
 	}
 }
@@ -841,7 +841,7 @@ ioremap::elliptics::async_write_result proxy_t::write(ioremap::elliptics::sessio
 		try {
 			size = boost::lexical_cast<uint64_t>(request->getArg("prepare"));
 		} catch (...) {
-			log()->debug("Cannot parse size of file from \'prepare\' argument");
+			log()->info("Cannot parse size of file from \'prepare\' argument");
 			throw fastcgi::HttpException(400);
 		}
 		return session.write_prepare(key, data, offset, size);
@@ -850,7 +850,7 @@ ioremap::elliptics::async_write_result proxy_t::write(ioremap::elliptics::sessio
 		try {
 			size = boost::lexical_cast<uint64_t>(request->getArg("commit"));
 		} catch (...) {
-			log()->debug("Cannot parse size of file from \'commit\' argument");
+			log()->info("Cannot parse size of file from \'commit\' argument");
 			throw fastcgi::HttpException(400);
 		}
 		return session.write_commit(key, data, offset, size);
