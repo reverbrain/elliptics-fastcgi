@@ -1,3 +1,12 @@
+elliptics-fastcgi (2.0.11) lucid; urgency=low
+
+  * Gives files by chunks
+  * Changes in config:
+  *  chunk_size was renamed to write_chunk_size
+  *  added read_chunk_size
+
+ -- Artem Sokolov <derikon@yandex-team.ru>  Wed, 27 Nov 2013 19:26:57 +0400
+
 elliptics-fastcgi (2.0.10) lucid; urgency=low
 
   * Fixed log levels for error messages
