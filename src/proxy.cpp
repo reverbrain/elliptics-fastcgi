@@ -41,7 +41,8 @@ struct proxy_t::data {
 	int                                                m_success_copies_num;
 	int                                                m_die_limit;
 	int                                                m_replication_count;
-	int                                                m_chunk_size;
+	int                                                m_write_chunk_size;
+	int                                                m_read_chunk_size;
 	bool                                               m_eblob_style_path;
 
 #ifdef HAVE_METABASE
@@ -85,8 +86,10 @@ void proxy_t::onLoad() {
 	m_data->m_directory_bit_num = config->asInt(path + "/dnet/directory-bit-num");
 	m_data->m_eblob_style_path = config->asInt(path + "/dnet/eblob_style_path", 0);
 
-	m_data->m_chunk_size = config->asInt(path + "/dnet/chunk_size", 0);
-	if (m_data->m_chunk_size < 0) m_data->m_chunk_size = 0;
+	m_data->m_write_chunk_size = config->asInt(path + "/dnet/write_chunk_size", 0);
+	m_data->m_read_chunk_size = config->asInt(path + "/dnet/read_chunk_size", 0);
+	if (m_data->m_write_chunk_size < 0) m_data->m_write_chunk_size = 0;
+	if (m_data->m_read_chunk_size < 0) m_data->m_read_chunk_size = 0;
 
 	std::string log_path = config->asString(path + "/dnet/log/path");
 	int log_mask = config->asInt(path + "/dnet/log/mask");
@@ -648,53 +651,80 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 	auto size = get_arg<uint64_t>(request, "size", 0);
 
 	session.set_exceptions_policy(ioremap::elliptics::session::no_exceptions);
-	auto arr = session.read_data(key, offset, size);
-	arr.wait();
-	if (arr.error()) {
-		request->setStatus(arr.error().code() == -ENOENT ? 404 : 501);
-		log()->error(arr.error().message().c_str());
-		return;
-	}
 
-	auto rr = get_results(request, arr).front();
+	size_t total_size = size;
 
-	bool embeded = request->hasArg("embed") || request->hasArg("embed_timestamp");
-	if (rr.io_attribute()->user_flags & elliptics::UF_EMBEDS) {
-		embeded = true;
-	}
-
-	auto dc = elliptics::data_container_t::unpack(rr.file(), embeded);
-
-	time_t timestamp = rr.io_attribute()->timestamp.tsec;
-
-	auto ts = dc.get<elliptics::DNET_FCGI_EMBED_TIMESTAMP>();
-	if (ts) {
-		timestamp = (time_t)(ts->tv_sec);
-	}
-
-	char ts_str[128] = {0};
-	struct tm tmp;
-	strftime(ts_str, sizeof (ts_str), "%a, %d %b %Y %T %Z", gmtime_r(&timestamp, &tmp));
-
-	if (request->hasHeader("If-Modified-Since")) {
-		if (request->getHeader("If-Modified-Since") == ts_str) {
-			request->setStatus(304);
+	if (total_size == 0) {
+		auto alr = session.lookup(key);
+		alr.wait();
+		if (alr.error()) {
+			request->setStatus(alr.error().code() == -ENOENT ? 404 : 501);
+			log()->error(alr.error().message().c_str());
 			return;
 		}
+
+		total_size = get_results(request, alr).front().file_info()->size;
 	}
 
-	request->setHeader("Last-Modified", ts_str);
+	size_t read_size = 0;
+	bool g = true;
 
-	std::string d = dc.data.to_string();
+	do {
+		auto arr = session.read_data(key, offset + read_size, m_data->m_read_chunk_size);
+		arr.wait();
 
-	request->setStatus(200);
-	request->setContentType(content_type);
+		if (arr.error()) {
+			request->setStatus(501);
+			log()->error(arr.error().message().c_str());
+			return;
+		}
 
-	request->setHeader("Content-Length",
-						boost::lexical_cast<std::string>(d.size()));
+		auto rr = get_results(request, arr).front();
+		std::string data;
 
+		if (g) {
+			g = false;
+			bool embeded = request->hasArg("embed") || request->hasArg("embed_timestamp");
+			if (rr.io_attribute()->user_flags & elliptics::UF_EMBEDS) {
+				embeded = true;
+			}
 
-	request->write(d.data(), d.size());
+			auto dc = elliptics::data_container_t::unpack(rr.file(), embeded);
+
+			time_t timestamp = rr.io_attribute()->timestamp.tsec;
+
+			auto ts = dc.get<elliptics::DNET_FCGI_EMBED_TIMESTAMP>();
+			if (ts) {
+				timestamp = (time_t)(ts->tv_sec);
+			}
+
+			char ts_str[128] = {0};
+			struct tm tmp;
+			strftime(ts_str, sizeof (ts_str), "%a, %d %b %Y %T %Z", gmtime_r(&timestamp, &tmp));
+
+			if (request->hasHeader("If-Modified-Since")) {
+				if (request->getHeader("If-Modified-Since") == ts_str) {
+					request->setStatus(304);
+					return;
+				}
+			}
+
+			request->setStatus(200);
+			request->setContentType(content_type);
+			request->setHeader("Content-Length",
+								boost::lexical_cast<std::string>(total_size));
+			request->setHeader("Last-Modified", ts_str);
+
+			dc.data.to_string().swap(data);
+			std::vector<int> groups;
+			groups.push_back(rr.command()->id.group_id);
+			session.set_groups(groups);
+		} else {
+			rr.file().to_string().swap(data);
+		}
+		request->write(data.data(), data.size());
+		read_size += data.size();
+	} while (read_size < total_size);
 }
 
 void proxy_t::delete_handler(fastcgi::Request *request) {
@@ -857,7 +887,7 @@ ioremap::elliptics::async_write_result proxy_t::write(ioremap::elliptics::sessio
 	} else if (request->hasArg("plain_write") || request->hasArg("plain-write")) {
 		return session.write_plain(key, data, offset);
 	} else {
-		return session.write_data(key, data, offset, m_data->m_chunk_size);
+		return session.write_data(key, data, offset, m_data->m_write_chunk_size);
 	}
 }
 
