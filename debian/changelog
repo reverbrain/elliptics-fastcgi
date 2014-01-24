@@ -1,3 +1,10 @@
+elliptics-fastcgi (2.0.13) lucid; urgency=low
+
+  * Compute csum only for first chunk in get_handler
+  * Added data-flow-rate option to increase timeout in first reading
+
+ -- Artem Sokolov <derikon@yandex-team.ru>  Fri, 24 Jan 2014 13:44:31 +0400
+
 elliptics-fastcgi (2.0.12) lucid; urgency=low
 
   * Changed build-depends: elliptics >= 2.24.14.33
