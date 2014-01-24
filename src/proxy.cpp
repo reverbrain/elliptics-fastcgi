@@ -44,6 +44,7 @@ struct proxy_t::data {
 	int                                                m_write_chunk_size;
 	int                                                m_read_chunk_size;
 	bool                                               m_eblob_style_path;
+	int                                                m_data_flow_rate;
 
 #ifdef HAVE_METABASE
 	std::unique_ptr<cocaine::dealer::dealer_t>         m_cocaine_dealer;
@@ -85,6 +86,7 @@ void proxy_t::onLoad() {
 	m_data->m_write_port = config->asInt(path + "/dnet/write-port", 9000);
 	m_data->m_directory_bit_num = config->asInt(path + "/dnet/directory-bit-num");
 	m_data->m_eblob_style_path = config->asInt(path + "/dnet/eblob_style_path", 0);
+	m_data->m_data_flow_rate = config->asInt(path + "/dnet/data-flow-rate", 0);
 
 	m_data->m_write_chunk_size = config->asInt(path + "/dnet/write_chunk_size", 0);
 	m_data->m_read_chunk_size = config->asInt(path + "/dnet/read_chunk_size", 0);
@@ -670,6 +672,13 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 	bool g = true;
 
 	do {
+		if (g) {
+			if (m_data->m_data_flow_rate) {
+				session.set_timeout(session.get_timeout() + total_size / m_data->m_data_flow_rate);
+			}
+		} else {
+			session.set_ioflags(session.get_ioflags() | DNET_IO_FLAGS_NOCSUM);
+		}
 		auto arr = session.read_data(key, offset + read_size, m_data->m_read_chunk_size);
 		arr.wait();
 
