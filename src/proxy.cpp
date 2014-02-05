@@ -6,6 +6,7 @@
 
 #include <iomanip>
 #include <chrono>
+#include <functional>
 
 #include "elliptics-fastcgi/data_container.hpp"
 
@@ -671,6 +672,20 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 	size_t read_size = 0;
 	bool g = true;
 
+
+	std::function<ioremap::elliptics::async_read_result(uint64_t)> read_func_data, read_func_latest, read_func_current;
+
+	{
+		using namespace std::placeholders;
+		typedef ioremap::elliptics::async_read_result (ioremap::elliptics::session::* read_func_t)
+			(const ioremap::elliptics::key &, uint64_t, uint64_t);
+
+		const auto &rcs = m_data->m_read_chunk_size;
+		read_func_data = std::bind(static_cast<read_func_t>(&ioremap::elliptics::session::read_data), session, key, _1, rcs);
+		read_func_latest = std::bind(static_cast<read_func_t>(&ioremap::elliptics::session::read_latest), session, key, _1, rcs);
+		read_func_current = (request->hasArg("latest") ? read_func_latest : read_func_data);
+	}
+
 	do {
 		if (g) {
 			if (m_data->m_data_flow_rate) {
@@ -679,7 +694,7 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 		} else {
 			session.set_ioflags(session.get_ioflags() | DNET_IO_FLAGS_NOCSUM);
 		}
-		auto arr = session.read_data(key, offset + read_size, m_data->m_read_chunk_size);
+		auto arr = read_func_current(offset + read_size);
 		arr.wait();
 
 		if (arr.error()) {
@@ -728,6 +743,7 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 			std::vector<int> groups;
 			groups.push_back(rr.command()->id.group_id);
 			session.set_groups(groups);
+			read_func_current = read_func_data;
 		} else {
 			rr.file().to_string().swap(data);
 		}
