@@ -1,3 +1,9 @@
+elliptics-fastcgi (2.0.14) lucid; urgency=low
+
+  * Added read-latest option
+
+ -- Artem Sokolov <derikon@yandex-team.ru>  Wed, 05 Feb 2014 22:11:45 +0400
+
 elliptics-fastcgi (2.0.13) lucid; urgency=low
 
   * Compute csum only for first chunk in get_handler
