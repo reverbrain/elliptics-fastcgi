@@ -704,6 +704,7 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 		}
 
 		auto rr = get_results(request, arr).front();
+		auto file = rr.file();
 		std::string data;
 
 		if (g) {
@@ -713,7 +714,7 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 				embeded = true;
 			}
 
-			auto dc = elliptics::data_container_t::unpack(rr.file(), embeded);
+			auto dc = elliptics::data_container_t::unpack(file, embeded);
 
 			time_t timestamp = rr.io_attribute()->timestamp.tsec;
 
@@ -733,22 +734,23 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 				}
 			}
 
+			dc.data.to_string().swap(data);
+
 			request->setStatus(200);
 			request->setContentType(content_type);
 			request->setHeader("Content-Length",
-								boost::lexical_cast<std::string>(total_size));
+								boost::lexical_cast<std::string>(total_size - file.size() + data.size()));
 			request->setHeader("Last-Modified", ts_str);
 
-			dc.data.to_string().swap(data);
 			std::vector<int> groups;
 			groups.push_back(rr.command()->id.group_id);
 			session.set_groups(groups);
 			read_func_current = read_func_data;
 		} else {
-			rr.file().to_string().swap(data);
+			file.to_string().swap(data);
 		}
 		request->write(data.data(), data.size());
-		read_size += data.size();
+		read_size += file.size();
 	} while (read_size < total_size);
 }
 
