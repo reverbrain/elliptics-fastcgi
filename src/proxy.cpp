@@ -536,6 +536,14 @@ std::string id_str(const ioremap::elliptics::key &key, ioremap::elliptics::sessi
 void proxy_t::upload_handler(fastcgi::Request *request) {
 	std::string data;
 	request->requestBody().toString(data);
+
+	if (data.size() == 0) {
+		log()->info("upload: request=\"%s\" err=\"cannot upload data of zero-length\"",
+			request->getScriptName().c_str());
+		request->setStatus(400);
+		return;
+	}
+
 	elliptics::data_container_t dc(data);
 
 	if (request->hasArg("embed") || request->hasArg("embed_timestamp")) {
