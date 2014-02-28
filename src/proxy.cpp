@@ -663,9 +663,9 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 
 	session.set_exceptions_policy(ioremap::elliptics::session::no_exceptions);
 
-	size_t total_size = size;
+	size_t total_size = 0;
 
-	if (total_size == 0) {
+	{
 		auto alr = session.lookup(key);
 		alr.wait();
 		if (alr.error()) {
@@ -675,6 +675,10 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 		}
 
 		total_size = get_results(request, alr).front().file_info()->size;
+		total_size -= offset;
+		if (size < total_size) {
+			total_size = size;
+		}
 	}
 
 	size_t read_size = 0;
