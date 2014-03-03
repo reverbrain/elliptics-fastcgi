@@ -1,3 +1,10 @@
+elliptics-fastcgi (2.0.18) lucid; urgency=low
+
+  * Fixed bug during determine Content-Length in case of arg size is not set
+  * Added check: offset cannot be greater than total_size of file
+
+ -- Artem Sokolov <derikon@yandex-team.ru>  Mon, 03 Mar 2014 13:24:58 +0400
+
 elliptics-fastcgi (2.0.17) lucid; urgency=low
 
   * Check args size and offset in get handler for belonging data size
