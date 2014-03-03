@@ -675,8 +675,15 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 		}
 
 		total_size = get_results(request, alr).front().file_info()->size;
+
+		if (offset >= total_size) {
+			request->setStatus(200);
+			request->setHeader("Content-Length", "0");
+			return;
+		}
+
 		total_size -= offset;
-		if (size < total_size) {
+		if (size !=0 && size < total_size) {
 			total_size = size;
 		}
 	}
