@@ -699,7 +699,10 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 		typedef ioremap::elliptics::async_read_result (ioremap::elliptics::session::* read_func_t)
 			(const ioremap::elliptics::key &, uint64_t, uint64_t);
 
-		const auto &rcs = m_data->m_read_chunk_size;
+		size_t rcs = m_data->m_read_chunk_size;
+		if (rcs == 0) {
+			rcs = total_size;
+		}
 		read_func_data = std::bind(static_cast<read_func_t>(&ioremap::elliptics::session::read_data), session, key, _1, rcs);
 		read_func_latest = std::bind(static_cast<read_func_t>(&ioremap::elliptics::session::read_latest), session, key, _1, rcs);
 		read_func_current = (request->hasArg("latest") ? read_func_latest : read_func_data);
