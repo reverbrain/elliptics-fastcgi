@@ -628,7 +628,7 @@ void proxy_t::upload_handler(fastcgi::Request *request) {
 	std::string str = oss.str();
 
 	request->setContentType("text/plaint");
-	request->setHeader("Context-Lenght",
+	request->setHeader("Content-Lenght",
 						boost::lexical_cast<std::string>(
 							str.length()));
 	request->write(str.c_str(), str.size());
@@ -903,7 +903,7 @@ void proxy_t::stat_log_handler(fastcgi::Request *request) {
 	std::string body = oss.str();
 	request->setStatus(200);
 	request->setContentType("text/xml");
-	request->setHeader("Context-Lenght",
+	request->setHeader("Content-Lenght",
 						boost::lexical_cast<std::string>(
 							body.length()));
 	request->write(body.c_str(), body.size());
@@ -1023,7 +1023,7 @@ void proxy_t::bulk_upload_handler(fastcgi::Request *request) {
 	std::string str = oss.str();
 
 	request->setContentType("text/plaint");
-	request->setHeader("Context-Lenght",
+	request->setHeader("Content-Lenght",
 					   boost::lexical_cast<std::string>(
 						   str.length()));
 	request->write(str.c_str(), str.size());
