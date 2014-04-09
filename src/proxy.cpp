@@ -666,7 +666,9 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 	size_t total_size = 0;
 
 	{
-		auto alr = session.lookup(key);
+		auto ioflags_bkp = session.get_ioflags();
+		session.set_ioflags(ioflags_bkp | DNET_IO_FLAGS_NOCSUM);
+		auto alr = session.read_data(key, 0, 1);
 		alr.wait();
 		if (alr.error()) {
 			request->setStatus(alr.error().code() == -ENOENT ? 404 : 501);
@@ -674,7 +676,7 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 			return;
 		}
 
-		total_size = get_results(request, alr).front().file_info()->size;
+		total_size = get_results(request, alr).front().io_attribute()->total_size;
 
 		if (offset >= total_size) {
 			request->setStatus(200);
@@ -686,6 +688,7 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 		if (size !=0 && size < total_size) {
 			total_size = size;
 		}
+		session.set_ioflags(ioflags_bkp);
 	}
 
 	size_t read_size = 0;
