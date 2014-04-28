@@ -6,7 +6,7 @@ Build-Depends: debhelper (>=5),
  cmake (>= 2.6),
  cdbs,
  elliptics-dev (>= 2.24.15.4), elliptics-dev (<< 2.25),
- libfastcgi-daemon2-dev,
+ libfastcgi-daemon2-dev (>= 2.10-25),
  libmsgpack-dev
 Standards-Version: 3.9.1
 
@@ -22,5 +22,5 @@ Description: New proxy with elliptics support (debug symbols)
 
 Package: elliptics-fastcgi-dev
 Architecture: any
-Depends: elliptics-fastcgi (= ${Source-Version}), libfastcgi-daemon2-dev, libmsgpack-dev, elliptics-dev (>= 2.24.14.33), elliptics-dev (<< 2.25)
+Depends: elliptics-fastcgi (= ${Source-Version}), libfastcgi-daemon2-dev (>= 2.10-25), libmsgpack-dev, elliptics-dev (>= 2.24.14.33), elliptics-dev (<< 2.25)
 Description: New proxy with elliptics support (developer files)
