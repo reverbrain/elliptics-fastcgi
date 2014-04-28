@@ -7,9 +7,36 @@
 #include <iomanip>
 #include <chrono>
 #include <functional>
+#include <algorithm>
+#include <iostream>
+#include <cctype>
 
 #include "elliptics-fastcgi/data_container.hpp"
 
+namespace {
+
+namespace details {
+
+template <typename T>
+void set_trace_id(ioremap::elliptics::session &session, const std::string &request_id, const T &v) {
+	size_t bytes = std::min(request_id.size(), sizeof(T) * 2);
+	T id = 0;
+
+	for (size_t index = 0; index != bytes; ++index) {
+		char c = request_id[index];
+		id = id * 16 + (isalpha(c) ? toupper(c) - 'A' + 10 : c - '0');
+	}
+
+	session.set_trace_id(id);
+}
+
+} // namespace details
+
+void set_trace_id(ioremap::elliptics::session &session, const std::string &request_id) {
+	details::set_trace_id(session, request_id, session.get_trace_id());
+}
+
+} // namespace
 namespace elliptics {
 
 struct proxy_t::data {
@@ -357,6 +384,7 @@ ioremap::elliptics::session proxy_t::get_session(fastcgi::Request *request) {
 		session.set_groups(get_groups(request));
 	}
 
+	set_trace_id(session, request->getRequestId());
 	return session;
 }
 
