@@ -1110,7 +1110,7 @@ void proxy_t::exec_script_handler(fastcgi::Request *request) {
 	request->requestBody().toString(data);
 
 	auto id = key.id();
-	auto aer = session.exec(&id, script, ioremap::elliptics::data_pointer(data));
+	auto aer = session.exec(&id, script, data);
 	auto res = get_results(request, aer).front();
 	auto res_data = res.data();
 	auto data_str = res_data.to_string();
