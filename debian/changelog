@@ -1,3 +1,9 @@
+elliptics-fastcgi (2.0.22) precise; urgency=low
+
+  * Added libmagic to determine content-type
+
+ -- Artem Sokolov <derikon@yandex-team.ru>  Mon, 12 May 2014 14:17:28 +0400
+
 elliptics-fastcgi (2.0.21) precise; urgency=low
 
   * Using implicit constructors of data_pointer and argument_data
