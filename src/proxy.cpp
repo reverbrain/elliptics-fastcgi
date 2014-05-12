@@ -4,6 +4,8 @@
 #include <fastcgi2/config.h>
 #include <fastcgi2/component_factory.h>
 
+#include <boost/thread/tss.hpp>
+
 #include <iomanip>
 #include <chrono>
 #include <functional>
@@ -12,6 +14,7 @@
 #include <cctype>
 
 #include "elliptics-fastcgi/data_container.hpp"
+#include "magic_provider.hpp"
 
 namespace {
 
@@ -73,6 +76,8 @@ struct proxy_t::data {
 	int                                                m_read_chunk_size;
 	bool                                               m_eblob_style_path;
 	int                                                m_data_flow_rate;
+
+	boost::thread_specific_ptr<magic_provider_t>       m_magic;
 
 #ifdef HAVE_METABASE
 	std::unique_ptr<cocaine::dealer::dealer_t>         m_cocaine_dealer;
@@ -382,9 +387,10 @@ ioremap::elliptics::session proxy_t::get_session(fastcgi::Request *request) {
 		session.set_cflags(request->hasArg("cflags") ? boost::lexical_cast<unsigned int>(request->getArg("cflags")) : 0);
 		session.set_ioflags(request->hasArg("ioflags") ? boost::lexical_cast<unsigned int>(request->getArg("ioflags")) : 0);
 		session.set_groups(get_groups(request));
+
+		set_trace_id(session, request->getRequestId());
 	}
 
-	set_trace_id(session, request->getRequestId());
 	return session;
 }
 
@@ -655,7 +661,7 @@ void proxy_t::upload_handler(fastcgi::Request *request) {
 	oss << "<written>" << written << "</written>\n</post>";
 	std::string str = oss.str();
 
-	request->setContentType("text/plaint");
+	request->setContentType("text/plain");
 	request->setHeader("Content-Lenght",
 						boost::lexical_cast<std::string>(
 							str.length()));
@@ -663,7 +669,6 @@ void proxy_t::upload_handler(fastcgi::Request *request) {
 }
 
 void proxy_t::get_handler(fastcgi::Request *request) {
-	std::string content_type;
 	{
 		std::string filename = get_filename(request);
 		std::string extention = filename.substr(filename.rfind('.') + 1, std::string::npos);
@@ -673,14 +678,6 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 			m_data->m_allow_list.find(extention) == m_data->m_allow_list.end())) {
 			request->setStatus(403);
 			return;
-		}
-
-		std::map<std::string, std::string>::iterator it = m_data->m_typemap.find(extention);
-
-		if (m_data->m_typemap.end() == it) {
-			content_type = "application/octet";
-		} else {
-			content_type = it->second;
 		}
 	}
 
@@ -790,7 +787,12 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 			dc.data.to_string().swap(data);
 
 			request->setStatus(200);
-			request->setContentType(content_type);
+
+			if (NULL == m_data->m_magic.get()) {
+				m_data->m_magic.reset(new magic_provider_t());
+			}
+
+			request->setContentType(m_data->m_magic->type(data));
 			request->setHeader("Content-Length",
 								boost::lexical_cast<std::string>(total_size - file.size() + data.size()));
 			request->setHeader("Last-Modified", ts_str);
@@ -1053,7 +1055,7 @@ void proxy_t::bulk_upload_handler(fastcgi::Request *request) {
 
 	std::string str = oss.str();
 
-	request->setContentType("text/plaint");
+	request->setContentType("text/plain");
 	request->setHeader("Content-Lenght",
 					   boost::lexical_cast<std::string>(
 						   str.length()));

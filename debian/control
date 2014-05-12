@@ -7,7 +7,8 @@ Build-Depends: debhelper (>=5),
  cdbs,
  elliptics-dev (>= 2.24.15.4), elliptics-dev (<< 2.25),
  libfastcgi-daemon2-dev (>= 2.10-25),
- libmsgpack-dev
+ libmsgpack-dev,
+ libmagic-dev
 Standards-Version: 3.9.1
 
 Package: elliptics-fastcgi
