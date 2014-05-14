@@ -13,7 +13,7 @@ Standards-Version: 3.9.1
 
 Package: elliptics-fastcgi
 Architecture: any
-Depends: ${shlibs:Depends}, elliptics-client (>= 2.24.14.33)
+Depends: ${shlibs:Depends}, elliptics-client (>= 2.24.14.33), libfastcgi-daemon2 (>= 2.10-25)
 Description: New proxy with elliptics support
 
 Package: elliptics-fastcgi-dbg
