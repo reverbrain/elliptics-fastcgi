@@ -840,7 +840,13 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 	auto read_func = std::bind(static_cast<read_func_t>(&ioremap::elliptics::session::read_data),
 						session, key, std::placeholders::_1, std::placeholders::_2);
 
-	if (request->hasHeader("Range")) {
+	// There may be a problem with simultaneous use of range header and embed parameter:
+	// in case you are wrong and set embed-parameter but there are no embeds in the data.
+	// It's frequent mistake in practice.
+	// So I can check it by reading first 48 bytes of file,
+	// but I don't like an additional read for each (possibly smaller than 48 bytes) request.
+	// In fact, nobody needs embeds -- it's legacy. Therefore this decision won't bring problems.
+	if (request->hasHeader("Range") && !embeded) {
 		size_t embed_offset = 0;
 		if (embeded) {
 			embed_offset = 48;
