@@ -1,3 +1,12 @@
+elliptics-fastcgi (2.0.23) precise; urgency=low
+
+  * Added depend: libfastcgi-daemon2 (>= 2.10-25)
+  * Added support for range headers
+  * Error message of wrong usage of embed-parameter now is more clear
+  * Fixed SIGSERV in case of groups are not set
+
+ -- Artem Sokolov <derikon@yandex-team.ru>  Wed, 21 May 2014 00:03:06 +0400
+
 elliptics-fastcgi (2.0.22) precise; urgency=low
 
   * Added libmagic to determine content-type
