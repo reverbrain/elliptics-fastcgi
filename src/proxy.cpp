@@ -448,12 +448,18 @@ std::vector<int> proxy_t::get_groups(fastcgi::Request *request, size_t count) {
 #endif /* HAVE_METABASE */
 #endif
 
-	std::random_shuffle(++groups.begin(), groups.end());
+	if (!groups.empty()) {
+		std::random_shuffle(++groups.begin(), groups.end());
+	}
 
 	if (count != 0 && count < groups.size()) {
 		groups.erase(groups.begin() + count, groups.end());
 	}
 
+	if (groups.empty()) {
+		log()->info("%s: there are no groups for operation with elliptics"
+				, request->getScriptName().c_str());
+	}
 	return groups;
 }
 
