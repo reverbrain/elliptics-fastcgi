@@ -73,9 +73,13 @@ std::vector<range_impl_t> parse_header_impl(const char *s, size_t total_size) {
 			if (range.type == range_impl_t::prefix || range.last >= total_size) {
 				range.last = last_byte;
 			}
+
+			if (range.first > last_byte) {
+				continue;
+			}
 		} else {
 			if (total_size < range.last) {
-				range.last = last_byte;
+				range.last = total_size;
 			}
 		}
 
