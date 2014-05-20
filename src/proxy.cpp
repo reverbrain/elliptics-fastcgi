@@ -941,14 +941,22 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 	std::string data;
 
 	if (offset == 0) {
-		auto dc = elliptics::data_container_t::unpack(file, embeded);
+		try {
+			auto dc = elliptics::data_container_t::unpack(file, embeded);
 
-		auto ts = dc.get<elliptics::DNET_FCGI_EMBED_TIMESTAMP>();
-		if (ts) {
-			timestamp = (time_t)(ts->tv_sec);
+			auto ts = dc.get<elliptics::DNET_FCGI_EMBED_TIMESTAMP>();
+			if (ts) {
+				timestamp = (time_t)(ts->tv_sec);
+			}
+
+			dc.data.to_string().swap(data);
+		} catch (const std::exception &ex) {
+			log()->error("%s: Cannot parse embeds from the read file: %s"
+					, request->getScriptName().c_str()
+					, ex.what());
+			request->setStatus(500);
+			return;
 		}
-
-		dc.data.to_string().swap(data);
 	} else {
 		file.to_string().swap(data);
 	}
