@@ -708,9 +708,24 @@ std::tuple<size_t, int, bool> proxy_t::lookup(ioremap::elliptics::session sessio
 		int group;
 		bool embed;
 	} ret {0, 0, false};
+	std::ostringstream oss;
+	oss << "lookup " << key.to_string() << ": " << (latest ? "latest" : "any") << "; groups=[";
 
 	auto ioflags_bkp = session.get_ioflags();
 	session.set_ioflags(ioflags_bkp | DNET_IO_FLAGS_NOCSUM);
+
+	{
+		auto groups = session.get_groups();
+		for (auto bit = groups.begin(), it = bit, end = groups.end(); it != end; ++it) {
+			if (bit != it) oss << ", ";
+			oss << *it;
+		}
+	}
+	oss << "]; ";
+	{
+		auto msg = oss.str();
+		log()->info("%s", msg.c_str());
+	}
 
 	std::list<ioremap::elliptics::async_read_result> arr;
 	if (!latest) {
@@ -730,14 +745,20 @@ std::tuple<size_t, int, bool> proxy_t::lookup(ioremap::elliptics::session sessio
 	std::list<ioremap::elliptics::async_read_result> bad_arr;
 	for (auto it = arr.begin(), end = arr.end(); it != end; ++it) {
 		it->wait();
-		if (it->error()) {
+		auto err = it->error();
+		if (err) {
 			bad_arr.emplace_back(std::move(*it));
+			auto msg = err.message();
+			log()->info("lookup %s: %s", key.to_string().c_str(), msg.c_str());
 		} else {
 			good_arr.emplace_back(std::move(*it));
 		}
 	}
 
 	if (good_arr.empty()) {
+		log()->info("lookup %s: failed"
+			, key.to_string().c_str()
+				);
 		bad_arr.front().error().throw_error();
 	}
 
@@ -746,7 +767,7 @@ std::tuple<size_t, int, bool> proxy_t::lookup(ioremap::elliptics::session sessio
 		auto &&entrys = result.get();
 		auto &&entry = entrys.front();
 		ret.total_size = entry.io_attribute()->total_size;
-		ret.group = session.get_groups().front();
+		ret.group = entry.command()->id.group_id;
 		if (entry.io_attribute()->user_flags & elliptics::UF_EMBEDS) {
 			ret.embed = true;
 		}
@@ -774,6 +795,9 @@ std::tuple<size_t, int, bool> proxy_t::lookup(ioremap::elliptics::session sessio
 			ret.embed = true;
 		}
 	}
+	log()->info("lookup %s: embed=%s, group=%d, size=%d"
+			, key.to_string().c_str()
+			, (ret.embed ? "yes" : "no"), int(ret.group), int(ret.total_size));
 
 	{
 		if (m_data->m_data_flow_rate) {
@@ -785,6 +809,9 @@ std::tuple<size_t, int, bool> proxy_t::lookup(ioremap::elliptics::session sessio
 			error.throw_error();
 		}
 	}
+	log()->info("lookup %s: checked sums"
+			, key.to_string().c_str()
+			);
 
 	return std::make_tuple(ret.total_size, ret.group, ret.embed);
 }
@@ -827,6 +854,9 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 				, error.error_message().c_str());
 		return;
 	}
+	log()->info("read %s: embed=%s, total-size=%d, range=%s"
+			, key.to_string().c_str()
+			, (embeded ? "yes" : "no"), int(total_size), (request->hasHeader("Range") ? "yes" : "no"));
 
 	{
 		if (offset >= total_size) {
@@ -874,6 +904,9 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 					boost::lexical_cast<std::string>(range.offset) + '-'
 					+ boost::lexical_cast<std::string>(range.size + range.offset - 1) + '/'
 					+ boost::lexical_cast<std::string>(range.size));
+			log()->info("read chunk %s: offset= %d; size=%d;"
+					, request->getScriptName().c_str()
+					, int(range.offset + embed_offset), int(range.size));
 			read_chunk(request, range.offset + embed_offset, range.size, read_func);
 		} else {
 			size_t content_length = 0;
@@ -927,6 +960,9 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 				const auto &headers = chunk_headers[index];
 				const auto &range = (*ranges_opt)[index];
 				request->write(headers.data(), headers.size());
+				log()->info("read chunk %s: offset= %d; size=%d;"
+						, request->getScriptName().c_str()
+						, int(range.offset + embed_offset), int(range.size));
 				read_chunk(request, range.offset + embed_offset, range.size, read_func);
 			}
 			{
@@ -938,6 +974,9 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 		return;
 	}
 
+	log()->info("read %s: offset= %d; size=%d;"
+			, request->getScriptName().c_str()
+			, int(offset), int(m_data->m_read_chunk_size));
 	auto arr = read_func(offset, m_data->m_read_chunk_size);
 	arr.wait();
 
@@ -998,6 +1037,9 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 	request->write(data.data(), data.size());
 
 	if (total_size > m_data->m_read_chunk_size) {
+		log()->info("read chunk %s: offset= %d; size=%d;"
+				, request->getScriptName().c_str()
+				, int(offset + file.size()), int(total_size - m_data->m_read_chunk_size));
 		read_chunk(request, offset + file.size(), total_size - m_data->m_read_chunk_size, read_func);
 	}
 
