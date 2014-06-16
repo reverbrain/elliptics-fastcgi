@@ -1,3 +1,9 @@
+elliptics-fastcgi (2.0.25) precise; urgency=low
+
+  * Uses libmagic only for extentions which are not in typemap
+
+ -- Artem Sokolov <derikon@yandex-team.ru>  Mon, 16 Jun 2014 16:17:32 +0400
+
 elliptics-fastcgi (2.0.24) precise; urgency=low
 
   * Fixed bug: reading key which is not exist in several groups
