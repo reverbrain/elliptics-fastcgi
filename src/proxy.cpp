@@ -817,13 +817,14 @@ std::tuple<size_t, int, bool> proxy_t::lookup(ioremap::elliptics::session sessio
 }
 
 void proxy_t::get_handler(fastcgi::Request *request) {
+	std::string file_extention;
 	{
 		std::string filename = get_filename(request);
-		std::string extention = filename.substr(filename.rfind('.') + 1, std::string::npos);
+		file_extention = filename.substr(filename.rfind('.') + 1, std::string::npos);
 
-		if (m_data->m_deny_list.find(extention) != m_data->m_deny_list.end() ||
+		if (m_data->m_deny_list.find(file_extention) != m_data->m_deny_list.end() ||
 			(m_data->m_deny_list.find("*") != m_data->m_deny_list.end() &&
-			m_data->m_allow_list.find(extention) == m_data->m_allow_list.end())) {
+			m_data->m_allow_list.find(file_extention) == m_data->m_allow_list.end())) {
 			request->setStatus(403);
 			return;
 		}
@@ -1025,11 +1026,18 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 
 	request->setStatus(200);
 
-	if (NULL == m_data->m_magic.get()) {
-		m_data->m_magic.reset(new magic_provider_t());
+	{
+		auto it = m_data->m_typemap.find(file_extention);
+		if (m_data->m_typemap.end() == it) {
+			if (NULL == m_data->m_magic.get()) {
+				m_data->m_magic.reset(new magic_provider_t());
+			}
+			request->setContentType(m_data->m_magic->type(data));
+		} else {
+			request->setContentType(it->second);
+		}
 	}
 
-	request->setContentType(m_data->m_magic->type(data));
 	request->setHeader("Content-Length",
 						boost::lexical_cast<std::string>(total_size - file.size() + data.size()));
 	request->setHeader("Last-Modified", ts_str);
