@@ -4,12 +4,13 @@ project(${TARGET})
 
 file(READ "${PROJECT_SOURCE_DIR}/debian/changelog" DEBCHANGELOG)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -Wall -pedantic -std=c++0x")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -Wall -pedantic -std=c++0x -g")
 
 include_directories(BEFORE ${PROJECT_SOURCE_DIR}/include)
 
 set(SOURCES 
 	${PROJECT_SOURCE_DIR}/src/proxy.cpp
+	${PROJECT_SOURCE_DIR}/src/ranges.cpp
 	${PROJECT_SOURCE_DIR}/src/data_container.cpp
 	${PROJECT_SOURCE_DIR}/src/lookup_result.cpp
 	)
@@ -20,6 +21,7 @@ target_link_libraries(
 	${TARGET}
 	fastcgi-daemon2 
 	elliptics_cpp
+	magic
 	)
 
 set_target_properties(

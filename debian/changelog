@@ -1,8 +1,35 @@
-elliptics-fastcgi (2.0.22~ell25) precise; urgency=low
+elliptics-fastcgi (2.0.25~ell25) precise; urgency=low
 
   * Deps: elliptics >= 25, elliptics << 26
 
  -- Artem Sokolov <derikon@yandex-team.ru>  Tue, 06 May 2014 21:28:06 +0400
+elliptics-fastcgi (2.0.25) precise; urgency=low
+
+  * Uses libmagic only for extentions which are not in typemap
+
+ -- Artem Sokolov <derikon@yandex-team.ru>  Mon, 16 Jun 2014 16:17:32 +0400
+
+elliptics-fastcgi (2.0.24) precise; urgency=low
+
+  * Fixed bug: reading key which is not exist in several groups
+  * Added log for lookup and chunk read
+
+ -- Artem Sokolov <derikon@yandex-team.ru>  Fri, 23 May 2014 16:32:36 +0400
+
+elliptics-fastcgi (2.0.23) precise; urgency=low
+
+  * Added depend: libfastcgi-daemon2 (>= 2.10-25)
+  * Added support for range headers
+  * Error message of wrong usage of embed-parameter now is more clear
+  * Fixed SIGSERV in case of groups are not set
+
+ -- Artem Sokolov <derikon@yandex-team.ru>  Wed, 21 May 2014 00:03:06 +0400
+
+elliptics-fastcgi (2.0.22) precise; urgency=low
+
+  * Added libmagic to determine content-type
+
+ -- Artem Sokolov <derikon@yandex-team.ru>  Mon, 12 May 2014 14:17:28 +0400
 
 elliptics-fastcgi (2.0.21) precise; urgency=low
 
