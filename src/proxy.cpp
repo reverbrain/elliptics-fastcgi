@@ -5,6 +5,8 @@
 #include <fastcgi2/config.h>
 #include <fastcgi2/component_factory.h>
 
+#include <crypto++/md5.h>
+
 #include <boost/thread/tss.hpp>
 
 #include <iomanip>
@@ -41,6 +43,28 @@ void set_trace_id(ioremap::elliptics::session &session, const std::string &reque
 
 void set_trace_id(ioremap::elliptics::session &session, const std::string &request_id) {
 	details::set_trace_id(session, request_id, session.get_trace_id());
+}
+
+std::string generate_etag(uint64_t timestamp, uint64_t size) {
+	using namespace CryptoPP;
+
+	MD5 hash;
+
+	hash.Update((const byte *)&timestamp, sizeof(uint64_t));
+	hash.Update((const byte *)&size, sizeof(uint64_t));
+
+	std::vector<byte> result(hash.DigestSize());
+	hash.Final(result.data());
+
+	std::ostringstream oss;
+	oss << std::hex;
+	oss << "\"";
+	for (auto it = result.begin(), end = result.end(); it != end; ++it) {
+		oss << std::setfill('0') << std::setw(2) << static_cast<int>(*it);
+	}
+	oss << "\"";
+
+	return oss.str();
 }
 
 } // namespace
@@ -701,12 +725,13 @@ bool proxy_t::read_chunk(fastcgi::Request *request, size_t offset, size_t size,
 	return true;
 }
 
-std::tuple<size_t, int, bool> proxy_t::lookup(ioremap::elliptics::session session,
+std::tuple<size_t, int, bool, uint64_t> proxy_t::lookup(ioremap::elliptics::session session,
 		const ioremap::elliptics::key &key, bool latest) {
 	struct {
 		size_t total_size;
 		int group;
 		bool embed;
+		uint64_t timestamp;
 	} ret {0, 0, false};
 	std::ostringstream oss;
 	oss << "lookup " << key.to_string() << ": " << (latest ? "latest" : "any") << "; groups=[";
@@ -771,6 +796,7 @@ std::tuple<size_t, int, bool> proxy_t::lookup(ioremap::elliptics::session sessio
 		if (entry.io_attribute()->user_flags & elliptics::UF_EMBEDS) {
 			ret.embed = true;
 		}
+		ret.timestamp = entry.io_attribute()->timestamp.tsec;
 	} else {
 		std::vector<ioremap::elliptics::read_result_entry> results;
 		results.reserve(good_arr.size());
@@ -790,6 +816,7 @@ std::tuple<size_t, int, bool> proxy_t::lookup(ioremap::elliptics::session sessio
 			}
 		}
 		ret.total_size = results[pos].io_attribute()->total_size;
+		ret.timestamp = results[pos].io_attribute()->timestamp.tsec;
 		ret.group = results[pos].command()->id.group_id;
 		if (results[pos].io_attribute()->user_flags & elliptics::UF_EMBEDS) {
 			ret.embed = true;
@@ -813,11 +840,12 @@ std::tuple<size_t, int, bool> proxy_t::lookup(ioremap::elliptics::session sessio
 			, key.to_string().c_str()
 			);
 
-	return std::make_tuple(ret.total_size, ret.group, ret.embed);
+	return std::make_tuple(ret.total_size, ret.group, ret.embed, ret.timestamp);
 }
 
 void proxy_t::get_handler(fastcgi::Request *request) {
 	std::string file_extention;
+	std::string ETag;
 	{
 		std::string filename = get_filename(request);
 		file_extention = filename.substr(filename.rfind('.') + 1, std::string::npos);
@@ -848,6 +876,9 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 		if (std::get<2>(res)) {
 			embeded = true;
 		}
+		if (!request->hasArg("offset") && !request->hasArg("size")) {
+			ETag = generate_etag(std::get<3>(res), total_size);
+		}
 	} catch (const ioremap::elliptics::error &error) {
 		request->setStatus(error.error_code() == -ENOENT ? 404 : 501);
 		log()->error("%s: %s"
@@ -863,6 +894,7 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 		if (offset >= total_size) {
 			request->setStatus(200);
 			request->setHeader("Content-Length", "0");
+			request->setHeader("Accept-Ranges", "bytes");
 			return;
 		}
 
@@ -905,6 +937,9 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 					boost::lexical_cast<std::string>(range.offset) + '-'
 					+ boost::lexical_cast<std::string>(range.size + range.offset - 1) + '/'
 					+ boost::lexical_cast<std::string>(range.size));
+			if (!ETag.empty()) {
+				request->setHeader("ETag", ETag);
+			}
 			log()->info("read chunk %s: offset= %d; size=%d;"
 					, request->getScriptName().c_str()
 					, int(range.offset + embed_offset), int(range.size));
@@ -956,6 +991,9 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 			request->setContentType("multipart/byteranges; boundary=" + boundary);
 			request->setHeader("Content-Length", boost::lexical_cast<std::string>(content_length));
 			request->setHeader("Accept-Ranges", "bytes");
+			if (!ETag.empty()) {
+				request->setHeader("ETag", ETag);
+			}
 
 			for (size_t index = 0, end = ranges_opt->size(); end != index; ++index) {
 				const auto &headers = chunk_headers[index];
@@ -1041,6 +1079,10 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 	request->setHeader("Content-Length",
 						boost::lexical_cast<std::string>(total_size - file.size() + data.size()));
 	request->setHeader("Last-Modified", ts_str);
+	request->setHeader("Accept-Ranges", "bytes");
+	if (!ETag.empty()) {
+		request->setHeader("ETag", ETag);
+	}
 
 	request->write(data.data(), data.size());
 
