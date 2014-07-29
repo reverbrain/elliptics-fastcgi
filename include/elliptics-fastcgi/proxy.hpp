@@ -114,7 +114,7 @@ protected:
 
 	bool read_chunk(fastcgi::Request *request, size_t offset, size_t size,
 			const std::function<ioremap::elliptics::async_read_result(uint64_t, uint64_t)> &read_func);
-	std::tuple<size_t, int, bool> lookup(ioremap::elliptics::session session,
+	std::tuple<size_t, int, bool, uint64_t> lookup(ioremap::elliptics::session session,
 			const ioremap::elliptics::key &key, bool latest);
 };
 
