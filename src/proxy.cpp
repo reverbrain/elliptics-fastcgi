@@ -615,8 +615,9 @@ void proxy_t::upload_handler(fastcgi::Request *request) {
 	elliptics::data_container_t dc(data);
 
 	if (request->hasArg("embed") || request->hasArg("embed_timestamp")) {
+		uint64_t t = time(0);
 		timespec timestamp;
-		timestamp.tv_sec = get_arg<uint64_t>(request, "timestamp", 0);
+		timestamp.tv_sec = get_arg<uint64_t>(request, "timestamp", t);
 		timestamp.tv_nsec = 0;
 
 		dc.set<elliptics::DNET_FCGI_EMBED_TIMESTAMP>(timestamp);
