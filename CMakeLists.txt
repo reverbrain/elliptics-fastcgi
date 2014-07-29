@@ -22,6 +22,7 @@ target_link_libraries(
 	fastcgi-daemon2 
 	elliptics_cpp
 	magic
+	crypto++
 	)
 
 set_target_properties(
