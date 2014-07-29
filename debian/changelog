@@ -1,3 +1,10 @@
+elliptics-fastcgi (2.0.26) precise; urgency=low
+
+  * Get-handler responses with ETag and Accept-Ranges
+  * Use current time instead of 0 as default for embed
+
+ -- Artem Sokolov <derikon@yandex-team.ru>  Tue, 29 Jul 2014 16:21:01 +0400
+
 elliptics-fastcgi (2.0.25) precise; urgency=low
 
   * Uses libmagic only for extentions which are not in typemap
