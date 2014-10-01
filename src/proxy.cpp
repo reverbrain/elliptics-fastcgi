@@ -164,8 +164,8 @@ void proxy_t::onLoad() {
 	dnet_conf.check_timeout = config->asInt(path + "/dnet/reconnect-timeout", 0);
 	dnet_conf.flags = config->asInt(path + "/dnet/cfg-flags", 4);
 
-	m_data->m_elliptics_log.reset(new ioremap::elliptics::file_logger(log_path.c_str(), log_mask));
-	m_data->m_elliptics_node.reset(new ioremap::elliptics::node(*m_data->m_elliptics_log, dnet_conf));
+	ioremap::elliptics::file_logger file_log(log_path.c_str(), (dnet_log_level)log_mask);
+	m_data->m_elliptics_node.reset(new ioremap::elliptics::node(ioremap::elliptics::logger(file_log,  blackhole::log::attributes_t()), dnet_conf));
 
 	std::vector<std::string> names;
 
@@ -177,34 +177,15 @@ void proxy_t::onLoad() {
 
 	for (std::vector<std::string>::iterator it = names.begin(), end = names.end();
 		 end != it; ++it) {
-		std::string remote = config->asString(it->c_str());
-		separator_t sep(":");
-		tokenizer_t tok(remote, sep);
-
-		if (params_num(tok) != 2) {
-			log()->error("invalid dnet remote %s", remote.c_str());
-			continue;
-		}
-
-		std::string addr;
-		int port, family;
-
 		try {
-			tokenizer_t::iterator tit = tok.begin();
-			addr = *tit;
-			port = boost::lexical_cast<int>(*(++tit));
-			family = boost::lexical_cast<int>(*(++tit));
+			m_data->m_elliptics_node->add_remote(*it);
 
-			m_data->m_elliptics_node->add_remote(addr.c_str(), port, family);
-
-			log()->info("added dnet remote %s:%d:%d", addr.c_str(), port, family);
+			log()->info("added dnet remote %s", it->c_str());
 		} catch(const std::exception &e) {
-			std::stringstream msg;
-			msg << "Can't connect to remote node " << addr << ":" << port << ":" << family << " : " << e.what() << std::endl;
-			m_data->m_elliptics_log->log(DNET_LOG_ERROR, msg.str().c_str());
+			log()->error("Can't connect to remote %s", it->c_str());
 		}
 		catch (...) {
-			log()->error("invalid dnet remote %s", remote.c_str());
+			log()->error("invalid dnet remote %s", it->c_str());
 		}
 
 	}
@@ -1146,6 +1127,7 @@ void proxy_t::download_info_handler(fastcgi::Request *request) {
 
 			auto lr = parse_lookup(entry);
 
+/*
 			long time;
 			{
 				using namespace std::chrono;
@@ -1153,6 +1135,7 @@ void proxy_t::download_info_handler(fastcgi::Request *request) {
 							system_clock::now().time_since_epoch()
 							).count();
 			}
+*/
 
 			ss << "<download-info>";
 			ss << "<host>" << lr.host() << "</host>";
@@ -1184,7 +1167,7 @@ void proxy_t::ping_handler(fastcgi::Request *request) {
 void proxy_t::stat_log_handler(fastcgi::Request *request) {
 	auto session = get_session();
 
-	auto srs = session.stat_log().get();
+	auto srs = session.monitor_stat(DNET_MONITOR_PROCFS).get();
 
 	char id_str[DNET_ID_SIZE * 2 + 1];
 	char addr_str[128];
@@ -1194,15 +1177,17 @@ void proxy_t::stat_log_handler(fastcgi::Request *request) {
 	oss << "<data>\n";
 
 	for (auto it = srs.begin(); it != srs.end(); ++it) {
-		const ioremap::elliptics::stat_result_entry &data = *it;
+		const auto &data = *it;
 		struct dnet_addr *addr = data.address();
 		struct dnet_cmd *cmd = data.command();
-		struct dnet_stat *st = data.statistics();
+		const std::string st = data.statistics();
 
 		dnet_server_convert_dnet_addr_raw(addr, addr_str, sizeof(addr_str));
 		dnet_dump_id_len_raw(cmd->id.id, DNET_ID_SIZE, id_str);
 
-		oss << "<stat addr=\"" << addr_str << "\" id=\"" << id_str << "\">";
+		oss << "<stat addr=\"" << addr_str << "\" id=\"" << id_str << "\">\n";
+        oss << "<json><![CDATA[" << st << "]]></json>\n";
+/*
 		oss << "<la>";
 		for (size_t i = 0; i != 3; ++i) {
 			oss << std::fixed << std::setprecision(2) << static_cast<float>(st->la[i]) / 100.0;
@@ -1217,7 +1202,8 @@ void proxy_t::stat_log_handler(fastcgi::Request *request) {
 		oss << "<available_size>" << st->bavail * st->bsize / 1024 / 1024 << "</available_size>";
 		oss << "<files>" << st->files << "</files>";
 		oss << "<fsid>" << std::hex << st->fsid << "</fsid>";
-		oss << "</stat>";
+*/
+		oss << "</stat>\n";
 	}
 
 	oss << "</data>";
