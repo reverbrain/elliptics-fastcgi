@@ -1,9 +1,21 @@
-elliptics-fastcgi (2.0.26) precise; urgency=low
+elliptics-fastcgi (2.0.27) precise; urgency=low
+
+  * Merged ell-25
+
+ -- Anton Kortunov <toshik@yandex-team.ru>  Wed, 01 Oct 2014 21:05:26 +0400
+
+elliptics-fastcgi (2.0.26~ell25) precise; urgency=low
 
   * Get-handler responses with ETag and Accept-Ranges
   * Use current time instead of 0 as default for embed
 
- -- Artem Sokolov <derikon@yandex-team.ru>  Tue, 29 Jul 2014 16:21:01 +0400
+ -- Artem Sokolov <derikon@yandex-team.ru>  Tue, 29 Jul 2014 14:55:39 +0400
+
+elliptics-fastcgi (2.0.25~ell25) precise; urgency=low
+
+  * Deps: elliptics >= 25, elliptics << 26
+
+ -- Artem Sokolov <derikon@yandex-team.ru>  Tue, 06 May 2014 21:28:06 +0400
 
 elliptics-fastcgi (2.0.25) precise; urgency=low
 
