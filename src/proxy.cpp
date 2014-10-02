@@ -177,15 +177,16 @@ void proxy_t::onLoad() {
 
 	for (std::vector<std::string>::iterator it = names.begin(), end = names.end();
 		 end != it; ++it) {
+		auto remote = config->asString(*it);
 		try {
-			m_data->m_elliptics_node->add_remote(*it);
+			m_data->m_elliptics_node->add_remote(remote);
 
-			log()->info("added dnet remote %s", it->c_str());
+			log()->info("added dnet remote %s", remote.c_str());
 		} catch(const std::exception &e) {
-			log()->error("Can't connect to remote %s", it->c_str());
+			log()->error("Can't connect to remote %s", remote.c_str());
 		}
 		catch (...) {
-			log()->error("invalid dnet remote %s", it->c_str());
+			log()->error("invalid dnet remote %s", remote.c_str());
 		}
 
 	}
