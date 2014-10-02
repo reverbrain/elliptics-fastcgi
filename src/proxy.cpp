@@ -91,7 +91,7 @@ struct proxy_t::data {
 
 	request_handlers m_handlers;
 
-	std::shared_ptr<ioremap::elliptics::file_logger>   m_elliptics_log;
+	ioremap::elliptics::logger_base                    m_elliptics_log;
 	std::shared_ptr<ioremap::elliptics::node>          m_elliptics_node;
 	std::vector<int>                                   m_groups;
 
@@ -164,8 +164,11 @@ void proxy_t::onLoad() {
 	dnet_conf.check_timeout = config->asInt(path + "/dnet/reconnect-timeout", 0);
 	dnet_conf.flags = config->asInt(path + "/dnet/cfg-flags", 4);
 
-	ioremap::elliptics::file_logger file_log(log_path.c_str(), (dnet_log_level)log_mask);
-	m_data->m_elliptics_node.reset(new ioremap::elliptics::node(ioremap::elliptics::logger(file_log,  blackhole::log::attributes_t()), dnet_conf));
+	m_data->m_elliptics_log = ioremap::elliptics::file_logger(
+			log_path.c_str(), (dnet_log_level)log_mask);
+	m_data->m_elliptics_node.reset(new ioremap::elliptics::node(
+				ioremap::elliptics::logger(m_data->m_elliptics_log,  blackhole::log::attributes_t())
+				, dnet_conf));
 
 	std::vector<std::string> names;
 
