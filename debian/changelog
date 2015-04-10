@@ -1,3 +1,9 @@
+elliptics-fastcgi (2.0.31) precise; urgency=low
+
+  * Changes according to elliptics 2.26.3.31 broken API
+
+ -- Artem Sokolov <derikon@yandex-team.ru>  Fri, 10 Apr 2015 17:30:02 +0400
+
 elliptics-fastcgi (2.0.30) precise; urgency=low
 
   * Fixed creating of elliptics logger
