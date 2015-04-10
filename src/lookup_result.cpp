@@ -54,7 +54,7 @@ uint16_t lookup_result_t::port() const
 {
 	if (!m_port) {
 		struct dnet_addr *addr = m_entry.storage_address();
-		m_port.reset(dnet_server_convert_port((struct sockaddr *)addr->addr, addr->addr_len));
+		m_port.reset(dnet_addr_port(addr));
 	}
 
 	return *m_port;
@@ -75,7 +75,7 @@ const std::string &lookup_result_t::addr() const
 	if (!m_addr) {
 		char addr_dst[512];
 		struct dnet_addr *addr = m_entry.storage_address();
-		dnet_server_convert_dnet_addr_raw(addr, addr_dst, sizeof (addr_dst) - 1);
+		dnet_addr_string_raw(addr, addr_dst, sizeof (addr_dst) - 1);
 		std::string tmp(addr_dst);
 		m_addr.reset(addr_dst);
 	}

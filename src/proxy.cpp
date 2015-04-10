@@ -1186,7 +1186,7 @@ void proxy_t::stat_log_handler(fastcgi::Request *request) {
 		struct dnet_cmd *cmd = data.command();
 		const std::string st = data.statistics();
 
-		dnet_server_convert_dnet_addr_raw(addr, addr_str, sizeof(addr_str));
+		dnet_addr_string_raw(addr, addr_str, sizeof(addr_str));
 		dnet_dump_id_len_raw(cmd->id.id, DNET_ID_SIZE, id_str);
 
 		oss << "<stat addr=\"" << addr_str << "\" id=\"" << id_str << "\">\n";

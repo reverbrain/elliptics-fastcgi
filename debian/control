@@ -5,7 +5,7 @@ Maintainer: Artem Sokolov <derikon@yandex-team.ru>
 Build-Depends: debhelper (>=5),
  cmake (>= 2.6),
  cdbs,
- elliptics-dev (>= 2.26), elliptics-dev (<< 2.27),
+ elliptics-dev (>= 2.26.3.31), elliptics-dev (<< 2.27),
  libfastcgi-daemon2-dev (>= 2.10-25),
  libmsgpack-dev,
  libmagic-dev,
@@ -14,7 +14,7 @@ Standards-Version: 3.9.1
 
 Package: elliptics-fastcgi
 Architecture: any
-Depends: ${shlibs:Depends}, elliptics-client (>= 2.26)
+Depends: ${shlibs:Depends}, elliptics-client (>= 2.26.3.31)
 Description: New proxy with elliptics support
 
 Package: elliptics-fastcgi-dbg
@@ -24,5 +24,5 @@ Description: New proxy with elliptics support (debug symbols)
 
 Package: elliptics-fastcgi-dev
 Architecture: any
-Depends: elliptics-fastcgi (= ${Source-Version}), libfastcgi-daemon2-dev (>= 2.10-25), libmsgpack-dev, elliptics-dev (>= 2.26), elliptics-dev (<< 2.27)
+Depends: elliptics-fastcgi (= ${Source-Version}), libfastcgi-daemon2-dev (>= 2.10-25), libmsgpack-dev, elliptics-dev (>= 2.26.3.31), elliptics-dev (<< 2.27)
 Description: New proxy with elliptics support (developer files)
