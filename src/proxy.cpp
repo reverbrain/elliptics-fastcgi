@@ -1039,7 +1039,22 @@ void proxy_t::get_handler(fastcgi::Request *request) {
 
 	char ts_str[128] = {0};
 	struct tm tmp;
-	strftime(ts_str, sizeof (ts_str), "%a, %d %b %Y %T %Z", gmtime_r(&timestamp, &tmp));
+
+	if (!gmtime_r(&timestamp, &tmp)) {
+		std::ostringstream oss;
+		oss << "cannot convert timestamp " << timestamp << " to calendar time: errno=" << errno;
+		log()->error("%s", oss.str().c_str());
+		request->setStatus(500);
+		return;
+	}
+
+	if (!strftime(ts_str, sizeof (ts_str), "%a, %d %b %Y %T %Z", &tmp)) {
+		std::ostringstream oss;
+		oss << "cannot format date string from calendar time: errno=" << errno;
+		log()->error("%s", oss.str().c_str());
+		request->setStatus(500);
+		return;
+	}
 
 	if (request->hasHeader("If-Modified-Since")) {
 		if (request->getHeader("If-Modified-Since") == ts_str) {
