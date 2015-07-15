@@ -1,3 +1,11 @@
+elliptics-fastcgi (2.0.32) trusty; urgency=medium
+
+  * MDS-1151: Check whether read object's timestamp is invalid
+    If gmtime_r returns 0 or strftime returns 0 the proxy will respond 500.
+  * MDS-1151: Proxy will check csum before reading
+
+ -- Artem Sokolov <derikon@yandex-team.ru>  Wed, 15 Jul 2015 14:38:06 +0300
+
 elliptics-fastcgi (2.0.31) precise; urgency=low
 
   * Changes according to elliptics 2.26.3.31 broken API
