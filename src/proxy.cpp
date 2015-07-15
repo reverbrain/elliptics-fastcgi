@@ -812,11 +812,13 @@ std::tuple<size_t, int, bool, uint64_t> proxy_t::lookup(ioremap::elliptics::sess
 			, key.to_string().c_str()
 			, (ret.embed ? "yes" : "no"), int(ret.group), int(ret.total_size));
 
+	session.set_ioflags(ioflags_bkp);
 	{
 		if (m_data->m_data_flow_rate) {
 			session.set_timeout(session.get_timeout() + ret.total_size / m_data->m_data_flow_rate);
 		}
 		auto arr = session.read_data(key, 0, 1);
+		arr.wait();
 		auto error = arr.error();
 		if (error) {
 			error.throw_error();
