@@ -1,3 +1,9 @@
+elliptics-fastcgi (2.0.33) trusty; urgency=medium
+
+  * Version bump
+
+ -- Artem Sokolov <derikon@yandex-team.ru>  Wed, 15 Jul 2015 16:17:43 +0300
+
 elliptics-fastcgi (2.0.32) trusty; urgency=medium
 
   * MDS-1151: Check whether read object's timestamp is invalid
